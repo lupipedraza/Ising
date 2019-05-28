@@ -8,7 +8,8 @@
 int poblar(int *red,float p,int dim);
 int imprimirMat(int *red, int dim);
 int imprimirVector(int *vect, int dim);
-int NuevoSpin(int *red, int dim,float T,float J, float H);
+int NuevoSpin(int *red, int dim,float T,float J, float H, int m);
+int magnitizacion(int *red,int dim);
 //Todas estas no se usan pero las deje
 int clasificar(int *red, int dim, int *historial,int etiqueta);
 int actualizar(int *local,int *historial,int s,int etiqueta);
@@ -22,22 +23,39 @@ int main()
 {
 
 	srand(time(NULL));
-	int dim = 4;
+	int dim = 30;
     	float p = 0.5;
 	int *red;
 	int J=0,H=1; //coeficientes
+	int m;
 	 //la red ahora tiene un +2 para contemplar el borde  
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
-	int iteraciones=100;
+	int iteraciones=100000;
 	int i;
-	int T=1;
-	poblar(red, p,dim);
- 	imprimirMat(red, dim+2);
-	for (i=0;i<iteraciones;i++)
-	{NuevoSpin(red, dim, T, J,  H);
- 	imprimirMat(red, dim+2);
-	}
-	
+
+	FILE * fp;
+	char filename[64];
+		//Para guardar
+	sprintf(filename,"magnetizacion_iter=%d.txt",iteraciones);
+	float T=2;
+	fp = fopen (filename, "w");
+	for (T=0.1;T<7;T+=0.1)
+	{
+		poblar(red, p,dim);
+	 	//imprimirMat(red, dim);
+		m=magnitizacion(red, dim);
+
+		fprintf(fp,"%d ", m);
+		for (i=0;i<iteraciones;i++)
+		{m=NuevoSpin(red, dim, T, J, H,m);
+		fprintf(fp,"%i ", m);
+	 	//imprimirMat(red, dim);
+		}
+		fprintf(fp,"\n");
+	}	
+	fclose(fp);
+	//imprimirMat(red, dim);
+
 	free(red);		
 	return 0;
 }
@@ -72,11 +90,11 @@ int poblar(int *red,float p,int dim)
 int imprimirMat(int *red, int dim)
     {
         int k, l;
-        for (k=0; k<dim; k++)
+        for (k=1; k<dim+1; k++)
 	{
-            for(l=0; l<dim; l++)
+            for(l=1; l<dim+1; l++)
             {
-		printf("%d", *(red+(dim*k+l)));
+		printf("%d", *(red+((dim+2)*k+l)));
 		}
 	        printf("\n");
         }
@@ -95,7 +113,7 @@ int imprimirVector(int *vect, int dim)
     return 0;
     }
 //**************Da vuelta (o no) un spin************************
-int NuevoSpin(int *red, int dim,float T,float J, float H)
+int NuevoSpin(int *red, int dim,float T,float J, float H, int m)
 	{
 	int casilleroi;
 	int casilleroj;
@@ -105,23 +123,47 @@ int NuevoSpin(int *red, int dim,float T,float J, float H)
 	float B;
 	B=(float)1/(float)T;
 	//El casillero elegido. Hay que hacer que no sea del borde, así que elegimos ambas coordenadas por separado
-	casilleroi=rand() % (dim+1);
-	casilleroj=rand() % (dim+1);
+	casilleroi=rand() % (dim);
+	casilleroj=rand() % (dim);
 	casillero=(dim+2)*(casilleroj+1)+casilleroi+1;
-	DeltaEnergia=-2*J*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)+2*H);
+	//DeltaEnergia=-2*J*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)+2*H);
+	DeltaEnergia=2*H;
+	 
 	if(*(red+casillero)==1)
 	{p=pow(exp(1.),-B*DeltaEnergia);}	  
 	else
-	{p=pow(exp(1.),B*DeltaEnergia);}	  
+	{p=pow(exp(1.),B*DeltaEnergia);}	
 
 	float rndm;
 	rndm=(float)rand()/(float)RAND_MAX;
 	if(rndm<p) //Tira la "moneda" y ve si es menor
 	{*(red+casillero)=-*(red+casillero);
+	 m=m+*(red+casillero)*2;
 	}
-	return 0;
+	return m;
 }
 
+//*************************************************************
+
+int magnitizacion(int *red,int dim)
+{
+	int k,l;
+	int sum=0;
+	for (k=1; k<dim+1; k++)
+	{
+            for(l=1; l<dim+1; l++)
+            {
+		sum=sum+*(red+((dim+2)*k+l));
+	
+	    }
+	
+        }
+
+
+	return sum;
+
+
+}
 //*************************************************************
 
 int clasificar(int *red, int dim,int *historial,int etiqueta)
