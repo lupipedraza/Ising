@@ -8,7 +8,7 @@
 int poblar(int *red,float p,int dim);
 int imprimirMat(int *red, int dim);
 int imprimirVector(int *vect, int dim);
-int NuevoSpin(int *red, int dim,float T,float J, float H, int m, float *TablaExponencial)
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial);
 int magnitizacion(int *red,int dim);
 //Todas estas no se usan pero las deje
 int clasificar(int *red, int dim, int *historial,int etiqueta);
@@ -26,33 +26,30 @@ int main()
 	int dim = 30;
     	float p = 0.5;
 	int *red;
-	int J=1,H=0; //coeficientes
+	int J=0.1,H=0; //coeficientes
 	int m;
 	 //la red ahora tiene un +2 para contemplar el borde  
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
 	int iteraciones=100000;
 	int i;
-	float TablaExponencial;
-	TablaExponencial=(float *)malloc(5*sizeof(int));
+	float * TablaExponencial;
+	TablaExponencial=(float *)malloc(5*sizeof(float));
 
 	FILE * fp;
 	char filename[64];
 		//Para guardar
 	sprintf(filename,"magnetizacion_J_iter=%d.txt",iteraciones);
-	float T=2;
-
+	
 	fp = fopen (filename, "w");
-	for (T=0.1;T<7;T+=0.1)
+	for (J=0.1;J<7;J+=0.1)
 	{
-		float Beta;
-		Beta=(float)1/(float)T;
-
+	
 		//TablaExponencial=[-8J,-4J,0,4J,8J]
-		*TablaExponencial+0=pow(exp(1.),-Beta*8*J);
-		*TablaExponencial+1=pow(exp(1.),-Beta*4*J);
-		*TablaExponencial+2=1
-		*TablaExponencial+3=pow(exp(1.), Beta*4*J);
-		*TablaExponencial+4=pow(exp(1.), Beta*8*J);
+		*(TablaExponencial+0)=exp(-8*J);
+		*(TablaExponencial+1)=exp(-4*J);
+		*(TablaExponencial+2)=1.0;
+		*(TablaExponencial+3)=1.0;
+		*(TablaExponencial+4)=1.0;//puedo poner 1?
 
 		poblar(red, p,dim);
 	 	//imprimirMat(red, dim);
@@ -60,7 +57,7 @@ int main()
 
 		fprintf(fp,"%d ", m);
 		for (i=0;i<iteraciones;i++)
-		{m=NuevoSpin(red, dim, T, J, H,m,TablaExponencial);
+		{m=NuevoSpin(red, dim, J, H,m,TablaExponencial);
 		fprintf(fp,"%i ", m);
 	 	//imprimirMat(red, dim);
 		}
@@ -126,7 +123,7 @@ int imprimirVector(int *vect, int dim)
     return 0;
     }
 //**************Da vuelta (o no) un spin************************
-int NuevoSpin(int *red, int dim,float T,float J, float H, int m, float *TablaExponencial)
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial)
 	{
 	int casilleroi;
 	int casilleroj;
@@ -137,17 +134,17 @@ int NuevoSpin(int *red, int dim,float T,float J, float H, int m, float *TablaExp
 	casilleroi=rand() % (dim);
 	casilleroj=rand() % (dim);
 	casillero=(dim+2)*(casilleroj+1)+casilleroi+1;
-	Delta=-*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2);
-	if Delta=-8;
-	p=*TablaExponencial;
-	if Delta=-4;
-	p=*TablaExponencial+1;
-	if Delta=0;
-	p=*TablaExponencial+2;
-	if Delta=4;
-	p=*TablaExponencial+3;
-	if Delta=8;
-	p=*TablaExponencial+4;
+	Delta=(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
+	if (Delta==-8)
+	{p=*TablaExponencial;}
+	if (Delta==-4)
+	{p=*TablaExponencial+1;}
+	if (Delta==0)
+	{p=*TablaExponencial+2;}
+	if (Delta==4)
+	{p=*TablaExponencial+3;}
+	if (Delta==8)
+	{p=*TablaExponencial+4;}
 
 
 	float rndm;
@@ -158,7 +155,7 @@ int NuevoSpin(int *red, int dim,float T,float J, float H, int m, float *TablaExp
 	}
 	
 	//Arreglar los bordes
-	for (j=1; j<dim; j++)
+	for (int j=1; j<dim; j++)
 	{
 	*(red+j)=*(red+(dim+2)*dim+j);//Arriba
 	*(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Arriba
