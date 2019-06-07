@@ -8,7 +8,7 @@
 int poblar(int *red,float p,int dim);
 int imprimirMat(int *red, int dim);
 int imprimirVector(int *vect, int dim);
-int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial);
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn);
 int magnitizacion(int *red,int dim);
 //Todas estas no se usan pero las deje
 int clasificar(int *red, int dim, int *historial,int etiqueta);
@@ -24,26 +24,30 @@ int main()
 
 	srand(time(NULL));
 	int dim = 30;
-    	float p = 0.5;
+	float p = 0.5;
 	int *red;
-	int J=0.1,H=0; //coeficientes
+	float H=0; //coeficientes
 	int m;
-	 //la red ahora tiene un +2 para contemplar el borde  
+	 //la red ahora tiene un +2 para contemplar el borde
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
 	int iteraciones=100000;
 	int i;
 	float * TablaExponencial;
 	TablaExponencial=(float *)malloc(5*sizeof(float));
 
+	float *MyReturn;
+	MyReturn=(float *)malloc((2)*(2)*sizeof(float));
+
 	FILE * fp;
 	char filename[64];
 		//Para guardar
 	sprintf(filename,"magnetizacion_J_iter=%d.txt",iteraciones);
-	
+	printf("hola \n") ;
+
 	fp = fopen (filename, "w");
-	for (J=0.1;J<7;J+=0.1)
+	for (float J=0.1;J<0.7;J+=0.1)
 	{
-	
+
 		//TablaExponencial=[-8J,-4J,0,4J,8J]
 		*(TablaExponencial+0)=exp(-8*J);
 		*(TablaExponencial+1)=exp(-4*J);
@@ -54,19 +58,21 @@ int main()
 		poblar(red, p,dim);
 	 	//imprimirMat(red, dim);
 		m=magnitizacion(red, dim);
-
+		printf("%f", J);
 		fprintf(fp,"%d ", m);
+		fprintf(fp,"%f\n", 0.0);
+
 		for (i=0;i<iteraciones;i++)
-		{m=NuevoSpin(red, dim, J, H,m,TablaExponencial);
-		fprintf(fp,"%i ", m);
-	 	//imprimirMat(red, dim);
+		{NuevoSpin(red, dim, J, H,m,TablaExponencial, MyReturn);
+		fprintf(fp,"%f ", *(MyReturn+0));
+		fprintf(fp,"%f\n", *(MyReturn+1));
 		}
 		fprintf(fp,"\n");
-	}	
+	}
 	fclose(fp);
-	//imprimirMat(red, dim);
 
-	free(red);		
+	free(MyReturn);
+	free(red);
 	return 0;
 }
 
@@ -85,7 +91,7 @@ int poblar(int *red,float p,int dim)
         *(red+i)=1;
     }
   }
- //Bordes 
+ //Bordes
   for (j=1; j<dim; j++)
   {
 	*(red+j)=*(red+(dim+2)*dim+j);//Arriba
@@ -123,12 +129,13 @@ int imprimirVector(int *vect, int dim)
     return 0;
     }
 //**************Da vuelta (o no) un spin************************
-int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial)
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn)
 	{
+
 	int casilleroi;
 	int casilleroj;
 	int casillero;
-	float p;
+	float p = 0.5;
 	int Delta;
 	//El casillero elegido. Hay que hacer que no sea del borde, así que elegimos ambas coordenadas por separado
 	casilleroi=rand() % (dim);
@@ -153,7 +160,10 @@ int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial
 	{*(red+casillero)=-*(red+casillero);
 	 m=m+*(red+casillero)*2;
 	}
-	
+
+	//calculo la energia
+	float e=0.0;
+	e= -J*Delta;
 	//Arreglar los bordes
 	for (int j=1; j<dim; j++)
 	{
@@ -163,10 +173,11 @@ int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial
 	*(red+j*(dim+2)+dim+1)=*(red+j*(dim+2)+1);//Derecha
 
 	}
-	return m;
+
+	*(MyReturn+0)=(float)m;
+	*(MyReturn+1)=e;
+	return 0;
 }
-
-
 
 //*************************************************************
 
@@ -179,9 +190,9 @@ int magnitizacion(int *red,int dim)
             for(l=1; l<dim+1; l++)
             {
 		sum=sum+*(red+((dim+2)*k+l));
-	
+
 	    }
-	
+
         }
 
 
@@ -304,7 +315,6 @@ for (i=0; i<dim*dim; i++)
 return 0;
 }
 
-//************************************************************
 //*************************************************************
 int percola(int *red, int dim)
 {
@@ -312,9 +322,9 @@ int i;
 int j=0;
 int b=0;
 int *vect1;
-vect1=(int *)malloc(dim*dim*sizeof(int)); 
+vect1=(int *)malloc(dim*dim*sizeof(int));
 int *vect2;
-vect2=(int *)malloc(dim*dim*sizeof(int)); 
+vect2=(int *)malloc(dim*dim*sizeof(int));
 int k;
 
 
@@ -339,15 +349,15 @@ if (j<dim*dim)
 {
 
 	for (i=0; i<dim; i++)
-	{ 
-		
+	{
+
 		for (k=0; k<dim; k++)
 		{
 			if (*(red+i*dim+k)==j){
 
 			b++;
 			}
-		}		
+		}
 	}
 }
 
@@ -355,7 +365,3 @@ if (j<dim*dim)
 return b;
 }
 //*************************************************************
-
-// Creo que anda bien. Habría que revisar un poco más que pasa con más casos. 
-// Falta: Reetiquetar todo, ver si percola o no
-
