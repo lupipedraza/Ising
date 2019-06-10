@@ -8,8 +8,8 @@
 int poblar(int *red,float p,int dim);
 int imprimirMat(int *red, int dim);
 int imprimirVector(int *vect, int dim);
-int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn);
-int magnitizacion(int *red,int dim);
+int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float *MyReturn);
+int magnitizacion(int *red,int dim,float J,  float *MyReturn);
 //Todas estas no se usan pero las deje
 int clasificar(int *red, int dim, int *historial,int etiqueta);
 int actualizar(int *local,int *historial,int s,int etiqueta);
@@ -27,7 +27,7 @@ int main()
 	float p = 0.5;
 	int *red;
 	float H=0; //coeficientes
-	int m;
+
 	 //la red ahora tiene un +2 para contemplar el borde
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
 	int iteraciones=100000;
@@ -36,7 +36,7 @@ int main()
 	TablaExponencial=(float *)malloc(5*sizeof(float));
 
 	float *MyReturn;
-	MyReturn=(float *)malloc((2)*(2)*sizeof(float));
+	MyReturn=(float *)malloc(2*sizeof(float));
 
 	FILE * fp;
 	char filename[64];
@@ -57,13 +57,13 @@ int main()
 
 		poblar(red, p,dim);
 	 	//imprimirMat(red, dim);
-		m=magnitizacion(red, dim);
-		printf("%f", J);
-		fprintf(fp,"%d ", m);
-		fprintf(fp,"%f\n", 0.0);
+		magnitizacion(red, dim,J, MyReturn);
+		fprintf(fp,"J= %f", J);
+		fprintf(fp,"\n\n");
+		fprintf(fp,"m	e\n");
 
 		for (i=0;i<iteraciones;i++)
-		{NuevoSpin(red, dim, J, H,m,TablaExponencial, MyReturn);
+		{NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
 		fprintf(fp,"%f ", *(MyReturn+0));
 		fprintf(fp,"%f\n", *(MyReturn+1));
 		}
@@ -129,7 +129,7 @@ int imprimirVector(int *vect, int dim)
     return 0;
     }
 //**************Da vuelta (o no) un spin************************
-int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn)
+int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float *MyReturn)
 	{
 
 	int casilleroi;
@@ -158,12 +158,13 @@ int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial
 	rndm=(float)rand()/(float)RAND_MAX;
 	if(rndm<p) //Tira la "moneda" y ve si es menor
 	{*(red+casillero)=-*(red+casillero);
-	 m=m+*(red+casillero)*2;
+	 *(MyReturn+0)=*(MyReturn+0)+*(red+casillero)*2;
 	}
 
 	//calculo la energia
-	float e=0.0;
+	float e;
 	e= -J*Delta;
+	*(MyReturn+1)=*(MyReturn+1)+e;
 	//Arreglar los bordes
 	for (int j=1; j<dim; j++)
 	{
@@ -174,29 +175,33 @@ int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial
 
 	}
 
-	*(MyReturn+0)=(float)m;
-	*(MyReturn+1)=e;
+
+
 	return 0;
 }
 
 //*************************************************************
 
-int magnitizacion(int *red,int dim)
+int magnitizacion(int *red,int dim,float J, float *MyReturn)
 {
 	int k,l;
-	int sum=0;
+	float m=0;
+	float e=0;
+	int casillero;
 	for (k=1; k<dim+1; k++)
 	{
             for(l=1; l<dim+1; l++)
             {
-		sum=sum+*(red+((dim+2)*k+l));
-
+		casillero=(dim+2)*(k)+l;
+		m=m+*(red+((dim+2)*k+l));
+		e=-J*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
 	    }
 
         }
+	*(MyReturn+0)=m;
+	*(MyReturn+1)=e;
 
-
-	return sum;
+	return 0;
 
 
 }
