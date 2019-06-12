@@ -8,8 +8,8 @@
 int poblar(int *red,float p,int dim);
 int imprimirMat(int *red, int dim);
 int imprimirVector(int *vect, int dim);
-int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float *MyReturn);
-int magnitizacion(int *red,int dim,float J,  float *MyReturn);
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn);
+int magnitizacion(int *red,int dim);
 //Todas estas no se usan pero las deje
 int clasificar(int *red, int dim, int *historial,int etiqueta);
 int actualizar(int *local,int *historial,int s,int etiqueta);
@@ -27,26 +27,28 @@ int main()
 	float p = 0.5;
 	int *red;
 	float H=0; //coeficientes
-
+	int m;
 	 //la red ahora tiene un +2 para contemplar el borde
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
-	int iteraciones=100000;
-	int i;
+	int iteraciones=10000000;
 	float * TablaExponencial;
 	TablaExponencial=(float *)malloc(5*sizeof(float));
 
 	float *MyReturn;
-	MyReturn=(float *)malloc(2*sizeof(float));
+	MyReturn=(float *)malloc((2)*(2)*sizeof(float));
 
 	FILE * fp;
 	char filename[64];
 		//Para guardar
 	sprintf(filename,"magnetizacion_J_iter=%d.txt",iteraciones);
-	printf("hola \n") ;
+
 
 	fp = fopen (filename, "w");
-	for (float J=0.1;J<0.7;J+=0.1)
+	for (float J=0.1;J<0.7;J+=0.01)
 	{
+		/*fprintf(fp,"J= %f", J);
+		fprintf(fp,"\n\n");
+		fprintf(fp,"m	e\n");*/
 
 		//TablaExponencial=[-8J,-4J,0,4J,8J]
 		*(TablaExponencial+0)=exp(-8*J);
@@ -57,17 +59,22 @@ int main()
 
 		poblar(red, p,dim);
 	 	//imprimirMat(red, dim);
-		magnitizacion(red, dim,J, MyReturn);
-		fprintf(fp,"J= %f", J);
-		fprintf(fp,"\n\n");
-		fprintf(fp,"m	e\n");
+		m=magnitizacion(red, dim);
+		//printf("%f", J);
+		fprintf(fp,"%i ", m);
+		fprintf(fp,"%f\n", 0.0);
 
-		for (i=0;i<iteraciones;i++)
-		{NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
-		fprintf(fp,"%f ", *(MyReturn+0));
-		fprintf(fp,"%f\n", *(MyReturn+1));
+		int i=0;
+		while (i<iteraciones)
+		{
+			for (int j=0;j<2000;j++){
+				NuevoSpin(red, dim, J, H,m,TablaExponencial, MyReturn);
+				i=i+1;
+			}
+			fprintf(fp,"%f ", *(MyReturn+0));
+			fprintf(fp,"%f\n", *(MyReturn+1));
 		}
-		fprintf(fp,"\n");
+		/*fprintf(fp,"\n");*/
 	}
 	fclose(fp);
 
@@ -129,7 +136,7 @@ int imprimirVector(int *vect, int dim)
     return 0;
     }
 //**************Da vuelta (o no) un spin************************
-int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float *MyReturn)
+int NuevoSpin(int *red, int dim,float J, float H, int m, float *TablaExponencial, float *MyReturn)
 	{
 
 	int casilleroi;
@@ -158,13 +165,12 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 	rndm=(float)rand()/(float)RAND_MAX;
 	if(rndm<p) //Tira la "moneda" y ve si es menor
 	{*(red+casillero)=-*(red+casillero);
-	 *(MyReturn+0)=*(MyReturn+0)+*(red+casillero)*2;
+	 m=m+*(red+casillero)*2;
 	}
 
 	//calculo la energia
-	float e;
+	float e=0.0;
 	e= -J*Delta;
-	*(MyReturn+1)=*(MyReturn+1)+e;
 	//Arreglar los bordes
 	for (int j=1; j<dim; j++)
 	{
@@ -175,33 +181,29 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 
 	}
 
-
-
+	*(MyReturn+0)=(float)m;
+	*(MyReturn+1)=e;
 	return 0;
 }
 
 //*************************************************************
 
-int magnitizacion(int *red,int dim,float J, float *MyReturn)
+int magnitizacion(int *red,int dim)
 {
 	int k,l;
-	float m=0;
-	float e=0;
-	int casillero;
+	int sum=0;
 	for (k=1; k<dim+1; k++)
 	{
             for(l=1; l<dim+1; l++)
             {
-		casillero=(dim+2)*(k)+l;
-		m=m+*(red+((dim+2)*k+l));
-		e=-J*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
+		sum=sum+*(red+((dim+2)*k+l));
+
 	    }
 
         }
-	*(MyReturn+0)=m;
-	*(MyReturn+1)=e;
 
-	return 0;
+
+	return sum;
 
 
 }
