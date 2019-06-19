@@ -22,7 +22,7 @@ int main()
 
 {
 
-	srand(time(NULL));
+
 	int dim = 32;
 	float p = 0.5;
 	int *red;
@@ -30,7 +30,7 @@ int main()
 
 	 //la red ahora tiene un +2 para contemplar el borde
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
-	int iteraciones=5000;
+	int iteraciones=1000000;
 	int i;
 	float * TablaExponencial;
 	TablaExponencial=(float *)malloc(5*sizeof(float));
@@ -44,9 +44,9 @@ int main()
 	sprintf(filename,"magnetizacion_J_ej4_iter=%d.txt",iteraciones);
 
 	fp = fopen (filename, "w");
-	for (float J=0.1;J<0.7;J+=0.1)
+	for (float J=0.2;J<20;J+=0.005)
 	{
-
+		i=0;
 		//TablaExponencial=[-8J,-4J,0,4J,8J]
 		*(TablaExponencial+0)=exp(-16*J);
 		*(TablaExponencial+1)=exp(-12*J);
@@ -58,12 +58,19 @@ int main()
 	 	//imprimirMat(red, dim);
 		magnitizacion(red, dim,J, MyReturn);
 
-		for (i=0;i<iteraciones;i++)
-		{NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
-		fprintf(fp,"%f ", *(MyReturn+0));
-		fprintf(fp,"%f\n", *(MyReturn+1));
+		while (i<iteraciones)
+		{
+			srand(time(NULL));
+			for (int j=0;j<5000;j++){
+				NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
+				i=i+1;
+			}
+			fprintf(fp,"%f ", *(MyReturn+0));
+			fprintf(fp,"%f\n", *(MyReturn+1));
+			
+
 		}
-		fprintf(fp,"\n");
+
 	}
 	fclose(fp);
 
@@ -88,7 +95,7 @@ int poblar(int *red,float p,int dim)
     }
   }
  //Bordes
-  for (j=1; j<dim; j++)
+  for (j=1; j<dim+1; j++)
   {
 	*(red+j)=*(red+(dim+2)*dim+j);//Arriba
 	*(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Arriba
@@ -139,15 +146,15 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 	casillero=(dim+2)*(casilleroj+1)+casilleroi+1;
 	Delta=2*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
 	Delta2=2*(*(red+casillero)*(*(red+casillero+dim+2+1)+*(red+casillero+dim+2-1)+*(red+casillero-dim-2-1)+*(red+casillero-dim-2+1)));
-	if (Delta-Delta2==-16)
+	if (Delta-Delta2==16)
 	{p=*(TablaExponencial);}
-	if (Delta-Delta2==-12)
+	if (Delta-Delta2==12)
 	{p=*(TablaExponencial+1);}
-	if (Delta-Delta2==-8)
+	if (Delta-Delta2==8)
 	{p=*(TablaExponencial+3);}
-	if (Delta-Delta2==-4)
+	if (Delta-Delta2==4)
 	{p=*(TablaExponencial+4);}
-	if (Delta-Delta2>=0)
+	if (Delta-Delta2<=0)
 	{p=*(TablaExponencial+5);}
 
 
@@ -162,7 +169,7 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 	 e= -J*Delta+J*Delta2;
 	 *(MyReturn+1)=*(MyReturn+1)+(e/L);
 	 //Arreglar los bordes
-	 for (int j=1; j<dim; j++)
+	 for (int j=1; j<dim+1; j++)
 	 {
 	 *(red+j)=*(red+(dim+2)*dim+j);//Arriba
 	 *(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Arriba
@@ -193,7 +200,7 @@ int magnitizacion(int *red,int dim,float J, float *MyReturn)
 
 		Delta=(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
 		Delta2=2*(*(red+casillero)*(*(red+casillero+dim+2+1)+*(red+casillero+dim+2-1)+*(red+casillero-dim-2-1)+*(red+casillero-dim-2+1)));
-		e=-J*Delta+J*Delta2;
+		e=e-J*Delta+J*Delta2;
 		}
   }
 	*(MyReturn+0)=m/L;

@@ -30,7 +30,7 @@ int main()
 
 	 //la red ahora tiene un +2 para contemplar el borde
 	red=(int *)malloc((dim+2)*(dim+2)*sizeof(int));
-	int iteraciones=5000000;
+	int iteraciones=10000000;
 	int i;
 	float * TablaExponencial;
 	TablaExponencial=(float *)malloc(5*sizeof(float));
@@ -51,19 +51,18 @@ int main()
 		*(TablaExponencial+0)=exp(-8*J);
 		*(TablaExponencial+1)=exp(-4*J);
 		*(TablaExponencial+2)=1.0;
-		*(TablaExponencial+3)=1.0;
-		*(TablaExponencial+4)=1.0;//puedo poner 1?
+
 
 		poblar(red, p,dim);
 	 	//imprimirMat(red, dim);
 		magnitizacion(red, dim,J, MyReturn);
 
 		for (i=0;i<iteraciones;i++)
-		{NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
+		{
+		NuevoSpin(red, dim, J, H,TablaExponencial, MyReturn);
 		fprintf(fp,"%f ", *(MyReturn+0));
 		fprintf(fp,"%f\n", *(MyReturn+1));
 		}
-		fprintf(fp,"\n");
 	}
 	fclose(fp);
 
@@ -88,10 +87,10 @@ int poblar(int *red,float p,int dim)
     }
   }
  //Bordes
-  for (j=1; j<dim; j++)
+  for (j=1; j<dim+2; j++)
   {
-	*(red+j)=*(red+(dim+2)*dim+j);//Arriba
-	*(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Arriba
+	*(red+j)=*(red+((dim+2)*dim)+j);//Arriba
+	*(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Abajo
 	*(red+j*(dim+2))=*(red+j*(dim+2)+dim);//Izquierda
 	*(red+j*(dim+2)+dim+1)=*(red+j*(dim+2)+1);//Derecha
 
@@ -138,16 +137,12 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 	casilleroj=rand() % (dim);
 	casillero=(dim+2)*(casilleroj+1)+casilleroi+1;
 	Delta=2*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
-	if (Delta==-8)
+	if (Delta==8)
 	{p=*(TablaExponencial);}
-	if (Delta==-4)
+	if (Delta==4)
 	{p=*(TablaExponencial+1);}
 	if (Delta==0)
 	{p=*(TablaExponencial+2);}
-	if (Delta==4)
-	{p=*(TablaExponencial+3);}
-	if (Delta==8)
-	{p=*(TablaExponencial+4);}
 
 
 	float rndm;
@@ -161,12 +156,13 @@ int NuevoSpin(int *red, int dim,float J, float H, float *TablaExponencial, float
 	 e= -J*Delta;
 	 *(MyReturn+1)=*(MyReturn+1)+(e/L);
 	 //Arreglar los bordes
-	 for (int j=1; j<dim; j++)
+	 for (int j=1; j<dim+2; j++)
 	 {
-	 *(red+j)=*(red+(dim+2)*dim+j);//Arriba
-	 *(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Arriba
-	 *(red+j*(dim+2))=*(red+j*(dim+2)+dim);//Izquierda
-	 *(red+j*(dim+2)+dim+1)=*(red+j*(dim+2)+1);//Derecha
+	*(red+j)=*(red+((dim+2)*dim)+j);//Arriba
+	*(red+(dim+2)*(dim+1)+j)=*(red+(dim+2)+j);//Abajo
+	*(red+j*(dim+2))=*(red+j*(dim+2)+dim);//Izquierda
+	*(red+j*(dim+2)+dim+1)=*(red+j*(dim+2)+1);//Derecha
+
 	 }
 	}
 
@@ -187,8 +183,8 @@ int magnitizacion(int *red,int dim,float J, float *MyReturn)
   	for(l=1; l<dim+1; l++)
     {
 		casillero=(dim+2)*k+l;
-		m=m+*(red+((dim+2)*k+l));
-		e=-J*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
+		m=m+*(red+casillero);
+		e=e-J*(*(red+casillero)*(*(red+casillero+1)+*(red+casillero-1)+*(red+casillero+dim+2)+*(red+casillero-dim-2)));
 		}
   }
 	*(MyReturn+0)=m/L;
